@@ -8,26 +8,36 @@ import re
 @click.option('--username', prompt = 'Twitter username (no @)')
 @click.option('--retweets', prompt = 'Include retweets? (y/n)', default = 'n')
 def gcm_twitter_bot(username, retweets):
+
+    """Creates csv file of 10 most recent tweets from given twitter handler
+        Args:
+            username (String): Twitter handle (no @)
+            retweets (String): 'y' or 'n' that enables user to choose whether csv should have retweets
+        Return:
+            None
+    """
+
     # Read config file
     config = configparser.RawConfigParser()
     config.read('config.ini')
 
-    # Authenticate to Twitter
+    # Fetch API Access Keys
     api_key = config['twitter']['API_KEY']
     api_key_secret = config['twitter']['API_KEY_SECRET']
     access_token = config['twitter']['ACCESS_TOKEN']
     access_token_secret = config['twitter']['ACCESS_TOKEN_SECRET']
 
-    # Authenticate to Twitter API
+    # Authenticate Twitter API
     auth = tweepy.OAuthHandler(api_key, api_key_secret)
     auth.set_access_token(access_token, access_token_secret)
     api = tweepy.API(auth)
 
-    #Call API. Returns a list of tweets
+    #Call Twitter API
     if retweets == 'y':
         retweets  = True
     else:
         retweets = False
+
     try:    
         tweets = api.user_timeline(screen_name = username, include_rts = retweets)
     except Exception as e:
@@ -47,10 +57,19 @@ def gcm_twitter_bot(username, retweets):
     df = pd.DataFrame(tweets_to_export, columns=columns)
     df.to_csv(username + '.csv', index=False)
 
+    #Print information on CSV before returning
     print('CSV file created: ' + username + '.csv')
     return
 
 def remove_emojis(text):
+
+    """Removes emojis from string
+        Args:
+            text (String): String with emojis + other undesirable characters
+        Return:
+            String with removed emojis
+    """
+
     regex_pattern = re.compile("["
                                u"\U0001F600-\U0001F64F"  # emoticons
                                u"\U0001F300-\U0001F5FF"  # symbols & pictographs
